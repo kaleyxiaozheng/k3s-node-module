@@ -9,10 +9,6 @@ resource "proxmox_virtual_environment_vm" "node" {
     vm_id = 100 
   } # use Ubuntu template with cloud-init support (assumes template ID is 100)
 
-  timeouts {
-    create = "10m"
-  }
-
   cpu { 
     cores = var.cpu_cores
     type = "host" 
@@ -39,15 +35,5 @@ resource "proxmox_virtual_environment_vm" "node" {
         }
       }
     }
-  }
-}
-
-resource "proxmox_virtual_environment_file" "config" {
-  content_type = "snippets"
-  datastore_id = "local"
-  node_name    = "pve"
-  source_raw {
-    data      = var.user_data
-    file_name = "${var.node_name}.yaml"
   }
 }
