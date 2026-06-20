@@ -1,5 +1,14 @@
 # modules/k3s-node/main.tf
+resource "proxmox_virtual_environment_file" "config" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = "pve"
 
+  source_raw {
+    data      = var.user_data
+    file_name = "${var.node_name}-cloud-init.yaml"
+  }
+}
 resource "proxmox_virtual_environment_vm" "node" {
   name      = var.node_name
   node_name = "pve"
@@ -11,14 +20,14 @@ resource "proxmox_virtual_environment_vm" "node" {
 
   cpu { 
     cores = var.cpu_cores
-    type = "host" 
+    type  = "host" 
   }
   memory { dedicated = var.memory }
   agent { enabled = true }
 
   network_device { 
     bridge = "vmbr0"
-    model = "virtio" 
+    model  = "virtio" 
   }
 
   initialization {
@@ -35,5 +44,11 @@ resource "proxmox_virtual_environment_vm" "node" {
         }
       }
     }
+  }
+lifecycle {
+    ignore_changes = [
+      initialization[0].ip_config,
+      network_device
+    ]
   }
 }
