@@ -7,8 +7,11 @@ resource "proxmox_virtual_environment_vm" "node" {
 
   clone { 
     vm_id = 100 
-    timeout_clone = 600
   } # use Ubuntu template with cloud-init support (assumes template ID is 100)
+
+  timeouts {
+    create = "10m"
+  }
 
   cpu { 
     cores = var.cpu_cores
