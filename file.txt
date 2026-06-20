@@ -1,0 +1,106 @@
+k3s-node-module/main.tf
+
+# modules/k3s-node/main.tf
+resource "proxmox_virtual_environment_file" "config" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = "pve"
+
+  source_raw {
+    data      = var.user_data
+    file_name = "${var.node_name}-cloud-init.yaml"
+  }
+}
+resource "proxmox_virtual_environment_vm" "node" {
+  name      = var.node_name
+  node_name = "pve"
+  vm_id     = var.vm_id
+
+  clone { 
+    vm_id = 100 
+  } # use Ubuntu template with cloud-init support (assumes template ID is 100)
+
+  cpu { 
+    cores = var.cpu_cores
+    type  = "host" 
+  }
+  memory { dedicated = var.memory }
+  agent { enabled = true }
+
+  network_device { 
+    bridge = "vmbr0"
+    model  = "virtio" 
+  }
+
+  initialization {
+    datastore_id      = "local-lvm"
+    user_data_file_id = proxmox_virtual_environment_file.config.id
+    
+    # dynamically check if it is using static IP
+    dynamic "ip_config" {
+      for_each = var.static_ip != null ? [1] : []
+      content {
+        ipv4 { 
+          address = var.static_ip
+          gateway = var.gateway 
+        }
+      }
+    }
+  }
+lifecycle {
+    ignore_changes = [
+      initialization[0].ip_config,
+      network_device
+    ]
+  }
+}
+
+---------------------------------------------------------------
+k3s-node-monule/output.tf
+
+output "vm_id" {
+  description = "The VM ID of the created node"
+  value       = proxmox_virtual_environment_vm.node.vm_id
+}
+
+output "node_name" {
+  description = "The name of the created node"
+  value       = proxmox_virtual_environment_vm.node.name
+}
+
+output "ipv4_addresses" {
+  description = "The IPv4 addresses of the created node"
+  value       = proxmox_virtual_environment_vm.node.ipv4_addresses
+}
+---------------------------------------------------------------
+k3s-node-monule/provider.tf
+
+terraform {
+  required_providers {
+    proxmox = {
+      source  = "bpg/proxmox"
+      version = "0.66.0"
+    }
+  }
+}
+---------------------------------------------------------------
+k3s-node-monule/variables.tf
+
+variable "node_name" { type = string }
+variable "vm_id"     { type = number }
+variable "memory"    { type = number }
+variable "user_data" { type = string }
+variable "cpu_cores" { 
+  type = number
+  default = 2 
+}
+
+variable "static_ip" { 
+  type = string
+  default = null 
+}
+variable "gateway"   { 
+  type = string
+  default = null 
+}
+---------------------------------------------------------------
