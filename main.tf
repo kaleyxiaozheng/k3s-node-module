@@ -23,7 +23,7 @@ resource "proxmox_virtual_environment_vm" "node" {
   node_name = "pve"
   vm_id     = var.vm_id
 
-  clone { vm_id = 100 } # use Ubuntu template with cloud-init support (assumes template ID is 100)
+  clone { vm_id = 999 } # use Ubuntu template with cloud-init support (assumes template ID is 100)
 
   cpu { 
     cores = var.cpu_cores
