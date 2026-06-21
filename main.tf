@@ -1,4 +1,13 @@
 # modules/k3s-node/main.tf
+
+resource "null_resource" "wait_for_node" {
+  depends_on = [proxmox_virtual_environment_vm.node]
+  
+  provisioner "local-exec" {
+    command = "echo 'Node ${var.node_name} initiated. Please allow 60s for Cloud-init to pull scripts.'"
+  }
+}
+
 resource "proxmox_virtual_environment_file" "config" {
   content_type = "snippets"
   datastore_id = "local" # Make sure datastore is enabled for snippets
@@ -14,11 +23,7 @@ resource "proxmox_virtual_environment_vm" "node" {
   node_name = "pve"
   vm_id     = var.vm_id
 
-  clone { 
-    vm_id        = 100 # use Ubuntu template with cloud-init support (assumes template ID is 100)
-    datastore_id = "local-lvm" 
-    full         = true
-  } 
+  clone { vm_id = 100 } # use Ubuntu template with cloud-init support (assumes template ID is 100)
 
   cpu { 
     cores = var.cpu_cores
@@ -32,17 +37,10 @@ resource "proxmox_virtual_environment_vm" "node" {
     model  = "virtio" 
   }
 
-  disk {
-    datastore_id = "local-lvm" # Use LVM for better performance
-    size         = 20          
-    interface    = "scsi0"
-    iothread     = true # Enable iothread for better disk performance
-  }
-
   initialization {
-    datastore_id      = "local-lvm" # Must use same datastore as above file resource
+    datastore_id      = "local" # Must use same datastore as above file resource
     user_data_file_id = proxmox_virtual_environment_file.config.id
-
+    
     # dynamically check if it is using static IP
     ip_config {
       ipv4 {
@@ -56,13 +54,5 @@ lifecycle {
       initialization[0].ip_config,
       network_device
     ]
-  }
-}
-
-resource "null_resource" "wait_for_node" {
-  depends_on = [proxmox_virtual_environment_vm.node]
-  
-  provisioner "local-exec" {
-    command = "echo 'Waiting for node ${var.node_name} to be ready...'; sleep 30"
   }
 }
