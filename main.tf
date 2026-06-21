@@ -28,6 +28,12 @@ resource "proxmox_virtual_environment_vm" "node" {
     model  = "virtio" 
   }
 
+  disk {
+    datastore_id = "local-lvm" # Use LVM for better performance
+    size         = 20          
+    interface    = "scsi0"
+  }
+
   initialization {
     datastore_id      = "local" # Must use same datastore as above file resource
     user_data_file_id = proxmox_virtual_environment_file.config.id
