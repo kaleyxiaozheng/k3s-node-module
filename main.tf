@@ -29,7 +29,7 @@ resource "proxmox_virtual_environment_vm" "node" {
   }
 
   initialization {
-    datastore_id = "local-lvm"
+    datastore_id      = "local" # Must use same datastore as above file resource
     user_data_file_id = proxmox_virtual_environment_file.config.id
     
     # dynamically check if it is using static IP
@@ -43,6 +43,7 @@ resource "proxmox_virtual_environment_vm" "node" {
 lifecycle {
     ignore_changes = [
       initialization[0].ip_config,
+      network_device
     ]
   }
 }
@@ -51,11 +52,6 @@ resource "null_resource" "wait_for_node" {
   depends_on = [proxmox_virtual_environment_vm.node]
   
   provisioner "local-exec" {
-    # 如果静态 IP 已定义，则使用它；否则需要根据具体情况通过其他方式检查
-    command = <<EOT
-      echo "Waiting for node ${var.node_name} to be reachable..."
-      # 这里可以添加简单的超时逻辑来确认 VM 已完成 Cloud-Init 的网络配置
-      sleep 30
-    EOT
+    command = "echo 'Waiting for node ${var.node_name} to be ready...'; sleep 30"
   }
 }
