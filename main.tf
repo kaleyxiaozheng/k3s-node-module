@@ -1,7 +1,7 @@
 # modules/k3s-node/main.tf
 resource "proxmox_virtual_environment_file" "config" {
   content_type = "snippets"
-  datastore_id = "local" # 确保此 datastore 已启用 Snippets 功能
+  datastore_id = "local" # Make sure datastore is enabled for snippets
   node_name    = "pve"
 
   source_raw {
