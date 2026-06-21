@@ -14,7 +14,11 @@ resource "proxmox_virtual_environment_vm" "node" {
   node_name = "pve"
   vm_id     = var.vm_id
 
-  clone { vm_id = 100 } # use Ubuntu template with cloud-init support (assumes template ID is 100)
+  clone { 
+    vm_id        = 100 # use Ubuntu template with cloud-init support (assumes template ID is 100)
+    datastore_id = "local-lvm" 
+    full         = true
+  } 
 
   cpu { 
     cores = var.cpu_cores
@@ -32,6 +36,7 @@ resource "proxmox_virtual_environment_vm" "node" {
     datastore_id = "local-lvm" # Use LVM for better performance
     size         = 20          
     interface    = "scsi0"
+    iothread     = true # Enable iothread for better disk performance
   }
 
   initialization {
