@@ -40,6 +40,12 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id      = "local" # Must use same datastore as above file resource
     user_data_file_id = proxmox_virtual_environment_file.config.id
+
+    user_account {
+      username = "kz"
+      keys = [var.ssh_public_key_content] 
+    }
+
     
     # dynamically check if it is using static IP
     ip_config {

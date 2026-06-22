@@ -15,3 +15,6 @@ variable "gateway"   {
   type = string
   default = null 
 }
+variable "ssh_public_key_content" {
+  type = string
+}
