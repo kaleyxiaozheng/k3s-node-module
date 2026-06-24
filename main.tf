@@ -42,8 +42,9 @@ resource "proxmox_virtual_environment_vm" "node" {
     user_data_file_id = proxmox_virtual_environment_file.config.id
 
     user_account {
-      username = "kz"
-      keys = [var.ssh_public_key_content] 
+      username = "ubuntu"
+      password = var.vm_password # In production, use a more secure method to handle passwords
+      keys     = [var.ssh_public_key_content] 
     }
 
     

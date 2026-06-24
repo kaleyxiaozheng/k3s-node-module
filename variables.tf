@@ -18,3 +18,7 @@ variable "gateway"   {
 variable "ssh_public_key_content" {
   type = string
 }
+variable "vm_password" {
+  type = string
+  default = "12345" # In production, use a more secure method to handle passwords
+}
