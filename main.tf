@@ -12,7 +12,7 @@ resource "proxmox_virtual_environment_file" "config" {
     file_name = "${var.node_name}-init.yaml"
   }
 }
-resource "proxmox_virtual_environment" "node" {
+resource "proxmox_virtual_environment_vm" "node" {
   name      = var.node_name
   node_name = "pve"
   vm_id     = var.vm_id
