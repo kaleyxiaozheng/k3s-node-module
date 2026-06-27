@@ -1,3 +1,8 @@
+variable "ubuntu_template_id" {
+  description = "The VM ID for the Ubuntu template"
+  type        = number
+  default     = 999
+}
 variable "node_name" { type = string }
 variable "vm_id"     { type = number }
 variable "memory"    { type = number }
@@ -21,4 +26,10 @@ variable "ssh_public_key_content" {
 variable "vm_password" {
   type = string
   sensitive = true
+}
+
+variable "node_type" {
+  type        = string
+  description = "Node type: master or worker"
+  default     = "worker" 
 }

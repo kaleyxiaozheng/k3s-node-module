@@ -1,3 +1,5 @@
+# output.tf
+
 output "vm_id" {
   description = "The VM ID of the created node"
   value       = proxmox_virtual_environment_vm.node.vm_id

@@ -1,29 +1,23 @@
 # modules/k3s-node/main.tf
 
-resource "null_resource" "wait_for_node" {
-  depends_on = [proxmox_virtual_environment_vm.node]
-  
-  provisioner "local-exec" {
-    command = "echo 'Node ${var.node_name} initiated. Please allow 60s for Cloud-init to pull scripts.'"
-  }
-}
-
 resource "proxmox_virtual_environment_file" "config" {
   content_type = "snippets"
   datastore_id = "local" # Make sure datastore is enabled for snippets
   node_name    = "pve"
 
   source_raw {
-    data      = var.user_data
-    file_name = "${var.node_name}-cloud-init.yaml"
+    data      = templatefile("${path.module}/templates/k3s-${var.node_type}-node-init.yaml.tpl", {
+      hostname = var.node_name
+    })
+    file_name = "${var.node_name}-init.yaml"
   }
 }
-resource "proxmox_virtual_environment_vm" "node" {
+resource "proxmox_virtual_environment" "node" {
   name      = var.node_name
   node_name = "pve"
   vm_id     = var.vm_id
 
-  clone { vm_id = 999 } # use Ubuntu template with cloud-init support (assumes template ID is 100)
+  clone { vm_id = var.ubuntu_template_id } # use Ubuntu template with cloud-init support (assumes template ID is 100)
 
   cpu { 
     cores = var.cpu_cores
