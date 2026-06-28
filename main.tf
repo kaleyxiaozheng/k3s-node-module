@@ -10,8 +10,8 @@ resource "proxmox_virtual_environment_file" "config" {
       hostname        = var.node_name
       k3s_token       = var.k3s_token
       master_ip       = var.master_ip
-      bootstrap_sh    = file("${path.module}/templates/bootstrap-${var.node_type}.sh")
-      post_install_sh = file("${path.module}/templates/post-install.sh")
+      bootstrap_sh    = file("${path.module}/scripts/bootstrap-${var.node_type}.sh")
+      post_install_sh = file("${path.module}/scripts/post-install.sh")
     })
     file_name = "${var.node_name}-init.yaml"
   }
