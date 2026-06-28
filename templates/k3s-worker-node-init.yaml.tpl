@@ -9,7 +9,7 @@ write_files:
   - path: /usr/local/bin/bootstrap.sh
     permissions: '0755'
     content: |
-      ${indent(6, bootstrap-worker.sh")}
+      ${bootstrap_sh}
 
 runcmd:
   # Must use nohup to run the process in the background, otherwise it will block Cloud-Init
