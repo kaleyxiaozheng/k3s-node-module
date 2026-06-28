@@ -33,3 +33,14 @@ variable "node_type" {
   description = "Node type: master or worker"
   default     = "worker" 
 }
+
+variable "k3s_token" {
+  type        = string
+  description = "The K3s cluster token"
+}
+
+variable "master_ip" {
+  type        = string
+  default     = "" # for worker node 
+  description = "The IP address of the master node"
+}
