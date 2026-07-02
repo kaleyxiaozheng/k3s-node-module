@@ -1,21 +1,5 @@
 # modules/k3s-node/main.tf
 
-resource "proxmox_virtual_environment_file" "config" {
-  content_type = "snippets"
-  datastore_id = "local" # Make sure datastore is enabled for snippets
-  node_name    = "pve"
-
-  source_raw {
-      data            = templatefile("${path.module}/templates/k3s-${var.node_type}-node-init.yaml.tpl", {
-      hostname        = var.node_name
-      k3s_token       = var.k3s_token
-      master_ip       = var.master_ip
-      bootstrap_sh    = file("${path.module}/scripts/bootstrap-${var.node_type}.sh")
-      post_install_sh = file("${path.module}/scripts/post-install.sh")
-    })
-    file_name = "${var.node_name}-init.yaml"
-  }
-}
 resource "proxmox_virtual_environment_vm" "node" {
   name      = var.node_name
   node_name = "pve"
@@ -37,7 +21,15 @@ resource "proxmox_virtual_environment_vm" "node" {
 
   initialization {
     datastore_id      = "local" # Must use same datastore as above file resource
-    user_data_file_id = proxmox_virtual_environment_file.config.id
+
+    user_data_model = "config"
+    user_data_base64 = base64encode(templatefile("${path.module}/templates/k3s-${var.node_type}-node-init.yaml.tpl", {
+      hostname        = var.node_name
+      k3s_token       = var.k3s_token
+      master_ip       = var.master_ip
+      bootstrap_sh    = file("${path.module}/scripts/bootstrap-${var.node_type}.sh")
+      post_install_sh = file("${path.module}/scripts/post-install.sh")
+    }))
 
     user_account {
       username = "ubuntu"
