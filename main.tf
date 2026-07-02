@@ -22,7 +22,8 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id      = "local" # Must use same datastore as above file resource
 
-    user_data_raw = templatefile("${path.module}/templates/k3s-${var.node_type}-node-init.yaml.tpl", {
+    user_data_model = "config"
+    user_data_raw   = templatefile("${path.module}/templates/k3s-${var.node_type}-node-init.yaml.tpl", {
       hostname        = var.node_name
       k3s_token       = var.k3s_token
       master_ip       = var.master_ip
