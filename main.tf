@@ -1,4 +1,3 @@
-# modules/k3s-node/main.tf
 resource "proxmox_virtual_environment_vm" "node" {
   name      = var.node_name
   node_name = "pve"
@@ -22,7 +21,7 @@ resource "proxmox_virtual_environment_vm" "node" {
   }
 
   initialization {
-    datastore_id      = "local-lvm" # Must use same datastore as above file resource
+    datastore_id      = "local-lvm"
 
     user_account {
       username = "ubuntu"
@@ -30,7 +29,6 @@ resource "proxmox_virtual_environment_vm" "node" {
       keys     = [var.ssh_public_key_content] 
     }
 
-    # dynamically check if it is using static IP
     ip_config {
       ipv4 {
         address = var.static_ip != null ? var.static_ip : "dhcp"
@@ -40,10 +38,12 @@ resource "proxmox_virtual_environment_vm" "node" {
         address = "dhcp"
       }
     }
-  dns {
-    servers = "8.8.8.8"
+    
+    dns {
+      servers = ["8.8.8.8"]
+    }
   }
- 
+
   connection {
     type        = "ssh"
     user        = "ubuntu"
@@ -55,7 +55,7 @@ resource "proxmox_virtual_environment_vm" "node" {
     inline = [
       "echo 'Waiting for cloud-init...'",
       "timeout 300s bash -c 'until [ -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done'",
-      "curl -sfL https://get.k3s.io | sh -", # 简化逻辑：直接在远程执行安装
+      "curl -sfL https://get.k3s.io | sh -",
       "echo 'K3s installed'"
     ]
   }
