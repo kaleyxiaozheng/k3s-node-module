@@ -10,7 +10,6 @@ variable "cpu_cores" {
   type = number
   default = 2 
 }
-
 variable "static_ip" { 
   type = string
   default = null 
@@ -22,22 +21,23 @@ variable "gateway"   {
 variable "ssh_public_key_content" {
   type = string
 }
+variable "ssh_private_key_path" {
+  type = string
+}
+
 variable "vm_password" {
   type = string
   sensitive = true
 }
-
 variable "node_type" {
   type        = string
   description = "Node type: master or worker"
   default     = "worker" 
 }
-
 variable "k3s_token" {
   type        = string
   description = "The K3s cluster token"
 }
-
 variable "master_ip" {
   type        = string
   default     = "" # for worker node 

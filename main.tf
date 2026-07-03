@@ -15,8 +15,6 @@ resource "proxmox_virtual_environment_vm" "node" {
   }
   memory { dedicated = var.memory }
   agent { enabled = true }
-  memory { dedicated = var.memory }
-  agent { enabled = true }
 
   network_device { 
     bridge = "vmbr0"
@@ -25,13 +23,6 @@ resource "proxmox_virtual_environment_vm" "node" {
 
   initialization {
     datastore_id      = "local-lvm" # Must use same datastore as above file resource
-    user_data_raw = templatefile("${path.module}/templates/k3s-${var.node_type}-node-init.yaml.tpl", {
-      hostname        = var.node_name
-      k3s_token       = var.k3s_token
-      master_ip       = var.master_ip
-      bootstrap_sh    = file("${path.module}/scripts/bootstrap-${var.node_type}.sh")
-      post_install_sh = file("${path.module}/scripts/post-install.sh")
-    })
 
     user_account {
       username = "ubuntu"
@@ -47,10 +38,20 @@ resource "proxmox_virtual_environment_vm" "node" {
       }
     }
   }
-lifecycle {
-    ignore_changes = [
-      initialization[0].ip_config,
-      network_device
+ 
+ connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    host        = var.static_ip != null ? split("/", var.static_ip)[0] : self.ipv4_addresses[0]
+    private_key = file(var.ssh_private_key_path)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo 'Waiting for cloud-init...'",
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do sleep 2; done",
+      "curl -sfL https://get.k3s.io | sh -", # 简化逻辑：直接在远程执行安装
+      "echo 'K3s installed'"
     ]
   }
 }
