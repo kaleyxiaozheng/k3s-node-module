@@ -39,7 +39,8 @@ resource "proxmox_virtual_environment_vm" "node" {
       ipv6 {
         address = "dhcp"
       }
-      dns_servers = "8.8.8.8"
+      dns_servers = ["8.8.8.8"]
+    }
   }
  
  connection {
