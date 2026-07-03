@@ -52,7 +52,7 @@ resource "proxmox_virtual_environment_vm" "node" {
   provisioner "remote-exec" {
     inline = [
       "echo 'Waiting for cloud-init...'",
-      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do sleep 2; done",
+      "timeout 300s bash -c 'until [ -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done'",
       "curl -sfL https://get.k3s.io | sh -", # 简化逻辑：直接在远程执行安装
       "echo 'K3s installed'"
     ]
