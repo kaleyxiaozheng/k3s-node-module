@@ -36,7 +36,10 @@ resource "proxmox_virtual_environment_vm" "node" {
         address = var.static_ip != null ? var.static_ip : "dhcp"
         gateway = var.gateway
       }
-    }
+      ipv6 {
+        address = "dhcp"
+      }
+      dns_servers = "8.8.8.8"
   }
  
  connection {
