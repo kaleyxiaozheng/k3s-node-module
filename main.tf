@@ -39,11 +39,12 @@ resource "proxmox_virtual_environment_vm" "node" {
       ipv6 {
         address = "dhcp"
       }
-      dns_servers = ["8.8.8.8"]
     }
+  dns {
+    servers = "8.8.8.8"
   }
  
- connection {
+  connection {
     type        = "ssh"
     user        = "ubuntu"
     host        = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
