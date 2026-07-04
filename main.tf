@@ -55,7 +55,7 @@ resource "proxmox_virtual_environment_vm" "node" {
     inline = [
       "echo 'Waiting for cloud-init...'",
       "timeout 300s bash -c 'until [ -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done'",
-      "curl -sfL https://get.k3s.io | sh -",
+      var.provisioner_command,
       "echo 'K3s installed'"
     ]
   }

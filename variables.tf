@@ -43,3 +43,5 @@ variable "master_ip" {
   default     = "" # for worker node 
   description = "The IP address of the master node"
 }
+
+variable "provisioner_command" { type = string }
