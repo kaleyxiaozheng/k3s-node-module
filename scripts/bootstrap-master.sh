@@ -23,7 +23,7 @@ echo "Tailscale is ready with IP: $TS_IP"
 if [[ "${is_master}" == "true" ]]; then
     curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --advertise-address=$TS_IP --tls-san=$TS_IP" sh -
 else
-    # pass K3S_URL and K3S_TOKEN
+    # 这里记得把 K3S_URL 和 K3S_TOKEN 传进来
     curl -sfL https://get.k3s.io | K3S_URL=https://${master_tailscale_ip}:6443 K3S_TOKEN=${k3s_token} sh -
 fi
 
@@ -32,7 +32,4 @@ until systemctl is-active --quiet k3s || systemctl is-active --quiet k3s-agent; 
     sleep 5
 done
 # ensure all are ready and then install Helm/Prometheus 
-if [ -f /usr/local/bin/post-install.sh ]; then
-    echo "Running post-install script..."
-    /usr/local/bin/post-install.sh
-fi
+[ -f /usr/local/bin/post-install.sh ] && /usr/local/bin/post-install.sh

@@ -18,15 +18,16 @@ echo "Tailscale is ready."
 
 # 4. waiting for Master node API service to be ready
 # Note: Here we use ${master_tailscale_ip} because the node is already in the same Tailscale network
-echo "Waiting for Master node at ${master_tailscale_ip}:6443..."
-until curl -skf https://${master_tailscale_ip}:6443/healthz > /dev/null 2>&1; do
+MASTER_HOST="k3s-master-node"
+echo "Waiting for Master node at ${MASTER_HOST}:6443..."
+until curl -skf https://${MASTER_HOST}:6443/healthz > /dev/null 2>&1; do
     echo "Master API not ready yet, retrying..."
     sleep 5
 done
 
 # 5. join K3s cluster
 echo "Joining K3s cluster..."
-curl -sfL https://get.k3s.io | K3S_URL=https://${master_tailscale_ip}:6443 K3S_TOKEN=${k3s_token} sh -
+curl -sfL https://get.k3s.io | K3S_URL=https://${MASTER_HOST}:6443 K3S_TOKEN=${k3s_token} sh -
 
 # 6. waiting for Agent service to start
 echo "Waiting for K3s agent to be ready..."
