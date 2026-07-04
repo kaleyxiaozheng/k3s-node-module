@@ -51,11 +51,25 @@ resource "proxmox_virtual_environment_vm" "node" {
     private_key = file(var.ssh_private_key_path)
   }
 
+  # pass bootstrap script to VM
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/bootstrap.sh", {
+      tailscale_auth_key  = var.tailscale_auth_key,
+      hostname            = var.node_name,
+      is_master           = var.node_type == "master" ? "true" : "false",
+      master_tailscale_ip = var.master_ip,
+      k3s_token           = var.k3s_token
+    })
+    destination = "/tmp/bootstrap.sh"
+  }
+
+  # run bootstrap script on VM
   provisioner "remote-exec" {
     inline = [
       "echo 'Waiting for cloud-init...'",
       "timeout 300s bash -c 'until [ -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done'",
-      var.provisioner_command,
+      "chmod +x /tmp/bootstrap.sh",
+      "/tmp/bootstrap.sh",
       "echo 'K3s installed'"
     ]
   }

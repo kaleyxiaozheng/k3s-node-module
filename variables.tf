@@ -44,4 +44,7 @@ variable "master_ip" {
   description = "The IP address of the master node"
 }
 
-variable "provisioner_command" { type = string }
+variable "tailscale_auth_key" {
+  type        = string
+  description = "The Tailscale auth key for node registration"
+}
