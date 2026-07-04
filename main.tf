@@ -57,7 +57,7 @@ resource "proxmox_virtual_environment_vm" "node" {
       tailscale_auth_key  = var.tailscale_auth_key,
       hostname            = var.node_name,
       is_master           = var.node_type == "master" ? "true" : "false",
-      master_tailscale_ip = var.master_ip,
+      master_host         = var.master_ip,
       k3s_token           = var.k3s_token
     })
     destination = "/tmp/bootstrap.sh"
