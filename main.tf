@@ -23,8 +23,14 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id      = "local-lvm"
 
-    # user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
-    user_data_file_id = "local:snippets/bootstrap.sh"
+    user_data_raw_base64 = base64encode(templatefile(
+      var.node_type == "master" ? "${path.module}/templates/k3s-master-node-init.yaml.tpl" : "${path.module}/templates/k3s-worker-node-init.yaml.tpl",
+      {
+        hostname        = var.node_name,
+        bootstrap_sh    = file("${path.module}/scripts/bootstrap.sh"),
+        post_install_sh  = file("${path.module}/scripts/post-install.sh")
+      }
+    ))
 
     user_account {
       username = "ubuntu"
@@ -54,21 +60,21 @@ resource "proxmox_virtual_environment_vm" "node" {
   }
 }
 
-resource "proxmox_virtual_environment_file" "cloud_config" {
-  content_type = "snippets"
-  datastore_id = "local"
-  node_name    = "pve"
+# resource "proxmox_virtual_environment_file" "cloud_config" {
+#   content_type = "snippets"
+#   datastore_id = "local"
+#   node_name    = "pve"
 
-  overwrite = true
+#   overwrite = true
 
-  source_raw {
-    data = templatefile("${path.module}/scripts/bootstrap.sh", {
-      tailscale_auth_key  = var.tailscale_auth_key,
-      hostname            = var.node_name,
-      is_master           = var.node_type == "master" ? "true" : "false",
-      master_host         = var.master_ip,
-      k3s_token           = var.k3s_token
-    })
-    file_name = "user-data-${var.node_name}.yaml"
-  }
-}
+#   source_raw {
+#     data = templatefile("${path.module}/scripts/bootstrap.sh", {
+#       tailscale_auth_key  = var.tailscale_auth_key,
+#       hostname            = var.node_name,
+#       is_master           = var.node_type == "master" ? "true" : "false",
+#       master_host         = var.master_ip,
+#       k3s_token           = var.k3s_token
+#     })
+#     file_name = "user-data-${var.node_name}.yaml"
+#   }
+# }
