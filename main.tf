@@ -23,16 +23,7 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id      = "local-lvm"
 
-    # pass bootstrap.sh script to the VM via cloud-init user-data
-    user_data = templatefile(
-      var.node_type == "master" ? "${path.module}/templates/k3s-master-node-init.yaml.tpl" : "${path.module}/templates/k3s-worker-node-init.yaml.tpl",
-      {
-        hostname        = var.node_name,
-        bootstrap_sh    = file("${path.module}/scripts/bootstrap.sh"),
-        post_install_sh  = file("${path.module}/scripts/post-install.sh")
-      }
-    )    
-    # user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
+    user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
 
     user_account {
       username = "ubuntu"
