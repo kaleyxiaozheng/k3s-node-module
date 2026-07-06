@@ -51,7 +51,6 @@ resource "proxmox_virtual_environment_vm" "node" {
     type        = "ssh"
     user        = "ubuntu"
     host        = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
-    private_key = file(var.ssh_private_key_path)
   }
 }
 
