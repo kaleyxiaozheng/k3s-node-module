@@ -23,7 +23,8 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id      = "local-lvm"
 
-    user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
+    # user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
+    user_data_file_id = "local:snippets/bootstrap.sh"
 
     user_account {
       username = "ubuntu"
@@ -57,6 +58,8 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
   content_type = "snippets"
   datastore_id = "local"
   node_name    = "pve"
+
+  overwrite = true
 
   source_raw {
     data = templatefile("${path.module}/scripts/bootstrap.sh", {
