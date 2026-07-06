@@ -23,6 +23,9 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id      = "local-lvm"
 
+    # pass bootstrap.sh script to the VM via cloud-init user-data
+    user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
+
     user_account {
       username = "ubuntu"
       password = var.vm_password
@@ -50,27 +53,21 @@ resource "proxmox_virtual_environment_vm" "node" {
     host        = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
     private_key = file(var.ssh_private_key_path)
   }
+}
 
-  # pass bootstrap script to VM
-  provisioner "file" {
-    content = templatefile("${path.module}/scripts/bootstrap.sh", {
+resource "proxmox_virtual_environment_file" "cloud_config" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = "pve"
+
+  source_raw {
+    data = templatefile("${path.module}/scripts/bootstrap.sh", {
       tailscale_auth_key  = var.tailscale_auth_key,
       hostname            = var.node_name,
       is_master           = var.node_type == "master" ? "true" : "false",
       master_host         = var.master_ip,
       k3s_token           = var.k3s_token
     })
-    destination = "/tmp/bootstrap.sh"
-  }
-
-  # run bootstrap script on VM
-  provisioner "remote-exec" {
-    inline = [
-      "echo 'Waiting for cloud-init...'",
-      "timeout 300s bash -c 'until [ -f /var/lib/cloud/instance/boot-finished ]; do sleep 5; done'",
-      "chmod +x /tmp/bootstrap.sh",
-      "/tmp/bootstrap.sh",
-      "echo 'K3s installed'"
-    ]
+    file_name = "user-data-${var.node_name}.yaml"
   }
 }
