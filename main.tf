@@ -57,16 +57,14 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
   content_type = "snippets"
   datastore_id = "local"
   node_name    = "pve"
-
-  overwrite = true
+  overwrite    = true
 
   source_raw {
-    data = templatefile("${path.module}/scripts/bootstrap.sh", {
-      tailscale_auth_key  = var.tailscale_auth_key,
-      hostname            = var.node_name,
-      is_master           = var.node_type == "master" ? "true" : "false",
-      master_host         = var.master_ip,
-      k3s_token           = var.k3s_token
+    data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
+      bootstrap_sh = file("${path.module}/scripts/bootstrap.sh"),
+      post_install_sh = file("${path.module}/scripts/post_install.sh"),
+      hostname = var.node_name,
+      is_master = var.node_type == "master"
     })
     file_name = "user-data-${var.node_name}.yaml"
   }

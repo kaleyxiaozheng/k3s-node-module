@@ -11,13 +11,13 @@ tailscale up --authkey=${tailscale_auth_key} --hostname=${hostname}
 
 echo "Waiting for Tailscale interface to be ready..."
 until tailscale ip -4 > /dev/null 2>&1; do sleep 2; done
-TS_IP=$(tailscale ip -4)
-echo "Tailscale is ready with IP: $TS_IP"
+TS_IP=$$(tailscale ip -4)
+echo "Tailscale is ready with IP: $$TS_IP"
 
 # --- 3. K3s installation logic (differentiated) ---
 if [[ "${is_master}" == "true" ]]; then
     echo "Installing K3s Master..."
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --advertise-address=$TS_IP --tls-san=$TS_IP" sh -
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --advertise-address=$$TS_IP --tls-san=$$TS_IP" sh -
 else
     echo "Waiting for Master API..."
     until curl -skf https://${master_host}:6443/healthz > /dev/null 2>&1; do sleep 5; done
