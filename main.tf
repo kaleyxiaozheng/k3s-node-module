@@ -62,7 +62,7 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
   source_raw {
     data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
       bootstrap_sh = file("${path.module}/scripts/bootstrap.sh"),
-      post_install_sh = file("${path.module}/scripts/post_install.sh"),
+      post_install_sh = file("${path.module}/scripts/post-install.sh"),
       hostname = var.node_name,
       is_master = var.node_type == "master"
     })
