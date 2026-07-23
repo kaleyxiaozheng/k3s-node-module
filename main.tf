@@ -4,8 +4,8 @@ resource "proxmox_virtual_environment_vm" "node" {
   vm_id     = var.vm_id
 
   clone { 
-    vm_id        = var.ubuntu_template_id
-    full         = true
+    vm_id = var.ubuntu_template_id
+    full  = true
   } 
 
   cpu { 
@@ -22,7 +22,6 @@ resource "proxmox_virtual_environment_vm" "node" {
 
   initialization {
     datastore_id      = "local-lvm"
-
     user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
 
     user_account {
@@ -47,25 +46,34 @@ resource "proxmox_virtual_environment_vm" "node" {
   }
 
   connection {
-    type        = "ssh"
-    user        = "ubuntu"
-    host        = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
-  }
-}
+    type = "ssh"
+    user = "ubuntu"
+    host = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
 
-resource "proxmox_virtual_environment_file" "cloud_config" {
-  content_type = "snippets"
-  datastore_id = "local"
-  node_name    = "pve"
-  overwrite    = true
+    resource "proxmox_virtual_environment_file" "cloud_config" {
+      content_type = "snippets"
+      datastore_id = "local"
+      node_name    = "pve"
+    
+      overwrite = true
 
-  source_raw {
-    data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
-      bootstrap_sh = file("${path.module}/scripts/bootstrap.sh"),
-      post_install_sh = file("${path.module}/scripts/post-install.sh"),
-      hostname = var.node_name,
-      is_master = var.node_type == "master"
-    })
-    file_name = "user-data-${var.node_name}.yaml"
+      source_raw {
+        data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
+          hostname = var.node_name,
+          is_master = var.node_type == "master",
+
+        # inject the script files as plain text into the Cloud-config
+          bootstrap_sh = templatefile("${path.module}/scripts/bootstrap.sh", {
+            tailscale_auth_key = var.tailscale_auth_key,
+            hostname           = var.node_name,
+            is_master          = var.node_type == "master" ? "true" : "false",
+            master_host        = var.master_ip,
+            k3s_token          = var.k3s_token
+          }),
+          post_install_sh = file("${path.module}/scripts/post-install.sh")
+        })
+      file_name = "user-data-${var.node_name}.yaml"
+      }
+    }
   }
 }
