@@ -1,8 +1,10 @@
 #!/bin/bash
+set -x  # Open debugging mode, print each command to log for troubleshooting
 set -e
 # force non-interactive mode for apt and disable needrestart popups
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 
 IS_MASTER="${is_master}"
 TAILSCALE_KEY="${tailscale_auth_key}"
@@ -10,12 +12,21 @@ HOSTNAME_VAL="${hostname}"
 MASTER_HOST_VAL="${master_host}"
 K3S_TOKEN_VAL="${k3s_token}"
 
-# --- 1. basic environment configuration (generic) ---
+echo "Starting bootstrap script..." >> /var/log/bootstrap.log
+
+# 2. wait for apt lock to be released (Cloud-init may be occupying apt at startup)
+while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+    echo "Waiting for other apt process to finish..."
+    sleep 2
+done
+
+# 3. Install basic software packages
+apt-get update -y# --- 1. basic environment configuration (generic) ---
 apt-get update -qq
-apt-get install -y -q -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-guest-agent curl git
+apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-guest-agent curl git
 
 if [[ "$IS_MASTER" == "true" ]]; then
-    apt-get install -y -q -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" helm
+    apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" helm
 fi
 systemctl enable --now qemu-guest-agent
 
@@ -50,4 +61,4 @@ if [[ "$IS_MASTER" == "true" && -f /usr/local/bin/post-install.sh ]]; then
     /usr/local/bin/post-install.sh
 fi
 
-echo "Node initialization completed."
+echo "Node initialization successfully completed."

@@ -22,5 +22,6 @@ write_files:
       ${post_install_sh}
 %{ endif ~}
 
+# Explicitly specify bash execution and prevent cloud-init from killing child processes prematurely
 runcmd:
-  - nohup /usr/local/bin/bootstrap.sh > /var/log/bootstrap.log 2>&1 &
+  - [ /bin/bash, -c, "nohup /usr/local/bin/bootstrap.sh > /var/log/bootstrap.log 2>&1 &" ]
