@@ -1,15 +1,21 @@
 #!/bin/bash
 set -e
+# force non-interactive mode for apt and disable needrestart popups
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
 
 IS_MASTER="${is_master}"
 TAILSCALE_KEY="${tailscale_auth_key}"
 HOSTNAME_VAL="${hostname}"
 MASTER_HOST_VAL="${master_host}"
 K3S_TOKEN_VAL="${k3s_token}"
+
 # --- 1. basic environment configuration (generic) ---
-apt-get update && apt-get install -y qemu-guest-agent curl git
+apt-get update -qq
+apt-get install -y -q -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-guest-agent curl git
+
 if [[ "$IS_MASTER" == "true" ]]; then
-    apt-get install -y helm
+    apt-get install -y -q -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" helm
 fi
 systemctl enable --now qemu-guest-agent
 
