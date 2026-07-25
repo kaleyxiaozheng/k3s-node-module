@@ -15,7 +15,9 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
         hostname           = var.node_name,
         is_master          = var.node_type == "master" ? "true" : "false",
         master_host        = var.master_ip,
-        k3s_token          = var.k3s_token
+        k3s_token          = var.k3s_token,
+        MASTER_HOST_VAL    = var.master_ip,
+        HOSTNAME_VAL       = var.node_name
       }),
       post_install_sh = file("${path.module}/scripts/post-install.sh")
     })
