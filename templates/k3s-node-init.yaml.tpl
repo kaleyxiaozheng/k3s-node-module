@@ -2,6 +2,16 @@
 
 hostname: ${hostname}
 manage_etc_hosts: true
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    passwd: ${vm_password}
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+ssh_pwauth: true
+
 %{ if is_master ~}
 # configure for Master 
 package_update: true

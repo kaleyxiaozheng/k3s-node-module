@@ -10,7 +10,7 @@ resource "proxmox_virtual_environment_vm" "node" {
 
   cpu { 
     cores = var.cpu_cores 
-    type = "host" 
+    type  = "host" 
   }
   memory { dedicated = var.memory }
   agent { enabled = true }
@@ -23,12 +23,6 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id      = "local-lvm"
     user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
-
-    user_account {
-      username = "ubuntu"
-      password = var.vm_password
-      keys     = [var.ssh_public_key_content] 
-    }
 
     ip_config {
       ipv4 {
@@ -59,8 +53,10 @@ resource "proxmox_virtual_environment_vm" "node" {
 
       source_raw {
         data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
-          hostname = var.node_name,
-          is_master = var.node_type == "master",
+          hostname       = var.node_name,
+          is_master      = var.node_type == "master",
+          vm_password    = var.vm_password, # password for the ubuntu user
+          ssh_public_key = var.ssh_public_key, # ssh public key for the ubuntu user
 
         # inject the script files as plain text into the Cloud-config
           bootstrap_sh = templatefile("${path.module}/scripts/bootstrap.sh", {
