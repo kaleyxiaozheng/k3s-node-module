@@ -12,17 +12,14 @@ HOSTNAME_VAL="${hostname}"
 MASTER_HOST_VAL="${master_host}"
 K3S_TOKEN_VAL="${k3s_token}"
 
-echo "Starting bootstrap script..." >> /var/log/bootstrap.log
+echo "=== Starting K3s Bootstrap Process ==="
 
-# 2. wait for apt lock to be released (Cloud-init may be occupying apt at startup)
-while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-    echo "Waiting for other apt process to finish..."
-    sleep 2
-done
+# 2. wait for network and dpkg lock
+until ping -c 1 8.8.8.8 >/dev/null 2>&1; do sleep 2; done
+while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 2; done
 
 # 3. Install basic software packages
-apt-get update -y# --- 1. basic environment configuration (generic) ---
-apt-get update -qq
+apt-get update -y 
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-guest-agent curl git
 
 if [[ "$IS_MASTER" == "true" ]]; then
@@ -61,4 +58,4 @@ if [[ "$IS_MASTER" == "true" && -f /usr/local/bin/post-install.sh ]]; then
     /usr/local/bin/post-install.sh
 fi
 
-echo "Node initialization successfully completed."
+echo "=== Node initialization completed successfully! ==="
