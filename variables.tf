@@ -24,6 +24,8 @@ variable "ssh_public_key_content" {
 
 variable "ssh_private_key_path" {
   type = string
+  description = "Path to the SSH private key for connecting to the VM"
+  default     = "~/.ssh/id_ed25519"
 }
 
 variable "vm_password" {
