@@ -1,3 +1,28 @@
+resource "proxmox_virtual_environment_file" "cloud_config" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = "pve"
+
+  overwrite = true
+
+  source_raw {
+    # vendor cloud-init configuration rendered from template
+    data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
+      hostname     = var.node_name,
+      is_master    = var.node_type == "master",
+      bootstrap_sh = templatefile("${path.module}/scripts/bootstrap.sh", {
+        tailscale_auth_key = var.tailscale_auth_key,
+        hostname           = var.node_name,
+        is_master          = var.node_type == "master" ? "true" : "false",
+        master_host        = var.master_ip,
+        k3s_token          = var.k3s_token
+      }),
+      post_install_sh = file("${path.module}/scripts/post-install.sh")
+    })
+    file_name = "vendor-data-${var.node_name}.yaml"
+  }
+}
+
 resource "proxmox_virtual_environment_vm" "node" {
   name      = var.node_name
   node_name = "pve"
@@ -21,8 +46,17 @@ resource "proxmox_virtual_environment_vm" "node" {
   }
 
   initialization {
-    datastore_id      = "local-lvm"
-    user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
+    datastore_id = "local-lvm"
+
+    # use vendor_data_file_id to place auto-run scripts
+    vendor_data_file_id = proxmox_virtual_environment_file.cloud_config.id
+
+    # original user_account works perfectly for injecting SSH Key and password
+    user_account {
+      username = "ubuntu"
+      password = var.vm_password
+      keys     = [trimspace(var.ssh_public_key_content)]
+    }
 
     ip_config {
       ipv4 {
@@ -40,36 +74,9 @@ resource "proxmox_virtual_environment_vm" "node" {
   }
 
   connection {
-    type = "ssh"
-    user = "ubuntu"
-    host = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
-
-    resource "proxmox_virtual_environment_file" "cloud_config" {
-      content_type = "snippets"
-      datastore_id = "local"
-      node_name    = "pve"
-    
-      overwrite = true
-
-      source_raw {
-        data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
-          hostname       = var.node_name,
-          is_master      = var.node_type == "master",
-          vm_password    = var.vm_password, # password for the ubuntu user
-          ssh_public_key = var.ssh_public_key, # ssh public key for the ubuntu user
-
-        # inject the script files as plain text into the Cloud-config
-          bootstrap_sh = templatefile("${path.module}/scripts/bootstrap.sh", {
-            tailscale_auth_key = var.tailscale_auth_key,
-            hostname           = var.node_name,
-            is_master          = var.node_type == "master" ? "true" : "false",
-            master_host        = var.master_ip,
-            k3s_token          = var.k3s_token
-          }),
-          post_install_sh = file("${path.module}/scripts/post-install.sh")
-        })
-      file_name = "user-data-${var.node_name}.yaml"
-      }
-    }
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file(var.ssh_private_key_path)
+    host        = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
   }
 }

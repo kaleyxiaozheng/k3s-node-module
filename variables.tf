@@ -22,6 +22,10 @@ variable "ssh_public_key_content" {
   type = string
 }
 
+variable "ssh_private_key_path" {
+  type = string
+}
+
 variable "vm_password" {
   type = string
   sensitive = true
