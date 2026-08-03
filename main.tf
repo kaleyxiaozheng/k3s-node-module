@@ -6,24 +6,25 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
   overwrite = true
 
   source_raw {
-    # vendor cloud-init configuration rendered from template
+    file_name = "user-data-${var.node_name}.yaml"
+
     data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
-      hostname     = var.node_name,
-      is_master    = var.node_type == "master",
-      bootstrap_sh = templatefile("${path.module}/scripts/bootstrap.sh", {
-        tailscale_auth_key = var.tailscale_auth_key,
-        hostname           = var.node_name,
-        is_master          = var.node_type == "master" ? "true" : "false",
-        master_host        = var.master_ip,
-        k3s_token          = var.k3s_token,
-        MASTER_HOST_VAL    = var.master_ip,
-        HOSTNAME_VAL       = var.node_name
-      }),
-      post_install_sh = file("${path.module}/scripts/post-install.sh")
+      hostname  = var.node_name,
+      is_master = var.node_type == "master",
+      
+      vm_password        = var.vm_password,
+      ssh_public_key     = var.ssh_public_key_content,
+
+      bootstrap_sh       = file("${path.module}/scripts/bootstrap.sh"),
+      post_install_sh    = file("${path.module}/scripts/post-install.sh"),
+      
+      tailscale_auth_key = var.tailscale_auth_key,
+      k3s_token          = var.k3s_token,
+      master_ip          = var.master_ip != null ? var.master_ip : ""
     })
-    file_name = "vendor-data-${var.node_name}.yaml"
   }
 }
+
 
 resource "proxmox_virtual_environment_vm" "node" {
   name      = var.node_name
@@ -50,15 +51,8 @@ resource "proxmox_virtual_environment_vm" "node" {
   initialization {
     datastore_id = "local-lvm"
 
-    # use vendor_data_file_id to place auto-run scripts
-    vendor_data_file_id = proxmox_virtual_environment_file.cloud_config.id
+    user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
 
-    # original user_account works perfectly for injecting SSH Key and password
-    user_account {
-      username = "ubuntu"
-      password = var.vm_password
-      keys     = [trimspace(var.ssh_public_key_content)]
-    }
 
     ip_config {
       ipv4 {
