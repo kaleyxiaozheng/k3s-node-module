@@ -7,10 +7,17 @@ package_update: false
 package_upgrade: false
 
 user: ubuntu
-password: ${vm_password}
-chpasswd: { expire: False }
+sudo: ['ALL=(ALL) NOPASSWD:ALL']
+shell: /bin/bash
 ssh_authorized_keys:
   - ${ssh_public_key}
+
+chpassword:
+  list: |
+    ubuntu:${vm_password}
+  expire: False
+
+ssh_pwauth: true
 
 write_files:
   - path: /etc/needrestart/conf.d/disable-needrestart.conf
