@@ -20,12 +20,19 @@ while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 2; done
 
 # 3. Install basic software packages
 apt-get update -y 
-apt-get install -y --no-upgrade -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" qemu-guest-agent curl git
+apt-get install -y --no-upgrade \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" 
+    ca-certificates curl git qemu-guest-agent
+systemctl enable --now qemu-guest-agent || true
 
 if [[ "$IS_MASTER" == "true" ]]; then
-    apt-get install -y --no-upgrade -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" helm
+    apt-get install -y --no-upgrade \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        helm
 fi
-systemctl enable --now qemu-guest-agent
+systemctl enable --now helm || true
 
 # 4. Tailscale configuration (generic)
 curl -fsSL https://tailscale.com/install.sh | sh
