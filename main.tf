@@ -2,22 +2,18 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
   content_type = "snippets"
   datastore_id = "local"
   node_name    = "pve"
-
-  overwrite = true
+  overwrite    = true
 
   source_raw {
     file_name = "user-data-${var.node_name}.yaml"
 
     data = templatefile("${path.module}/templates/k3s-node-init.yaml.tpl", {
-      hostname  = var.node_name,
-      is_master = var.node_type == "master",
-      
+      hostname           = var.node_name,
+      is_master          = var.node_type == "master",
       vm_password        = var.vm_password,
       ssh_public_key     = var.ssh_public_key_content,
-
       bootstrap_sh       = file("${path.module}/scripts/bootstrap.sh"),
       post_install_sh    = file("${path.module}/scripts/post-install.sh"),
-      
       tailscale_auth_key = var.tailscale_auth_key,
       k3s_token          = var.k3s_token,
       master_ip          = var.master_ip != null ? var.master_ip : ""
@@ -40,19 +36,30 @@ resource "proxmox_virtual_environment_vm" "node" {
     cores = var.cpu_cores 
     type  = "host" 
   }
-  memory { dedicated = var.memory }
-  agent { enabled = true }
+
+  memory { 
+    dedicated = var.memory 
+  }
+
+  agent { 
+    enabled = true 
+  }
 
   network_device { 
-    bridge = "vmbr0"
+    bridge = "var.network_bridge"
     model  = "virtio" 
   }
 
   initialization {
-    datastore_id = "local-lvm"
-
+    datastore_id = var.vm_datastore_id
     user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
 
+    # Ensures SSH key + password even if custom user-date has issues
+    user_accounts {
+      username = "ubuntu"
+      password = var.vm_password
+      keys     = [trimspace(var.ssh_public_key_content)]
+    }
 
     ip_config {
       ipv4 {
@@ -67,12 +74,5 @@ resource "proxmox_virtual_environment_vm" "node" {
     dns {
       servers = ["8.8.8.8"]
     }
-  }
-
-  connection {
-    type        = "ssh"
-    user        = "ubuntu"
-    private_key = file(var.ssh_private_key_path)
-    host        = var.static_ip != null ? split("/", var.static_ip)[0] : flatten(self.ipv4_addresses)[0]
   }
 }

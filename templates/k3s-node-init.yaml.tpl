@@ -5,17 +5,24 @@ manage_etc_hosts: true
 
 package_update: false
 package_upgrade: false
+pacakges:
+  - qemu-guest-agent
+  - curl
+  - ca-certificates
 
-user: ubuntu
-sudo: ['ALL=(ALL) NOPASSWD:ALL']
-shell: /bin/bash
-ssh_authorized_keys:
-  - ${ssh_public_key}
+users: 
+  - name: ubuntu
+    groups: [admin, sudo]
+    shell: /bin/bash
+    lock_passwd: false
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${ssh_public_key}
 
 chpassword:
+  expire: False
   list: |
     ubuntu:${vm_password}
-  expire: False
 
 ssh_pwauth: true
 
